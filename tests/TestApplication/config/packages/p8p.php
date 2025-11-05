@@ -24,5 +24,19 @@ return static function (ContainerConfigurator $container): void {
             ],
         ],
         'default_client' => 'default',
+        'generator' => [
+            'namespace' => 'P8p\\Bundle\\Tests\\TestApplication\\P8p',
+            'path' => '%kernel.project_dir%/src/P8p',
+            'apis' => [
+                [
+                    'group' => 'food.example.com',
+                    'version' => 'v1alpha1',
+                ],
+                [
+                    'group' => 'food.example.com',
+                    'version' => 'v1beta1',
+                ],
+            ],
+        ],
     ]);
 };

@@ -11,6 +11,7 @@
 
 namespace P8p\Bundle\Tests\DependencyInjection;
 
+use P8p\Bundle\Command\GenerateCommand;
 use P8p\Bundle\DependencyInjection\P8pExtension;
 use P8p\Bundle\Factory\ClientRegistry;
 use P8p\Client\Client;
@@ -99,5 +100,67 @@ class P8pExtensionTest extends TestCase
 
         $this->assertTrue($this->container->hasAlias(Client::class.' $stagingClient'));
         $this->assertSame('p8p.client.staging', (string) $this->container->getAlias(Client::class.' $stagingClient'));
+    }
+
+    public function testLoadWithoutGeneratorConfig(): void
+    {
+        $config = [
+            'clients' => [
+                'default' => [
+                    'dsn' => 'kube://in-cluster',
+                ],
+            ],
+        ];
+
+        $this->extension->load([$config], $this->container);
+
+        // Command should be registered with empty config when generator section is not present
+        $this->assertTrue($this->container->has(GenerateCommand::class));
+        $commandDef = $this->container->getDefinition(GenerateCommand::class);
+        $this->assertSame([[]], $commandDef->getArguments());
+    }
+
+    public function testLoadWithGeneratorConfig(): void
+    {
+        $config = [
+            'clients' => [
+                'default' => [
+                    'dsn' => 'kube://in-cluster',
+                ],
+            ],
+            'generator' => [
+                'namespace' => 'App\\K8s\\CRD',
+                'path' => '/path/to/output',
+                'apis' => [
+                    [
+                        'group' => 'cert-manager.io',
+                        'version' => 'v1',
+                    ],
+                ],
+            ],
+        ];
+
+        $this->extension->load([$config], $this->container);
+
+        // Check that the command is registered
+        $this->assertTrue($this->container->has(GenerateCommand::class));
+
+        // Check command definition
+        $commandDef = $this->container->getDefinition(GenerateCommand::class);
+        $this->assertSame(GenerateCommand::class, $commandDef->getClass());
+
+        // Check command arguments
+        $args = $commandDef->getArguments();
+        $this->assertCount(1, $args);
+        $this->assertIsArray($args[0]);
+        $this->assertArrayHasKey('namespace', $args[0]);
+        $this->assertArrayHasKey('path', $args[0]);
+        $this->assertArrayHasKey('apis', $args[0]);
+        $this->assertSame('App\\K8s\\CRD', $args[0]['namespace']);
+        $this->assertSame('/path/to/output', $args[0]['path']);
+
+        // Check command is tagged for autoconfiguration
+        $tags = $commandDef->getTag('console.command');
+        $this->assertNotEmpty($tags);
     }
 }

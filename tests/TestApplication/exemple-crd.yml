@@ -1,0 +1,158 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: pizzerias.food.example.com
+spec:
+  group: food.example.com
+  names:
+    plural: pizzerias
+    singular: pizzeria
+    kind: Pizzeria
+    shortNames:
+      - pizza
+      - pz
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: false
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: A Pizzeria represents a magical place where pizzas are crafted with love.
+          properties:
+            spec:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: The name of the pizzeria.
+                location:
+                  type: string
+                  description: City or area where the pizzeria is located.
+                open:
+                  type: boolean
+                  description: Whether the pizzeria is currently open.
+                pizzaCount:
+                  type: integer
+                  minimum: 0
+                  description: Number of pizzas sold per day on average.
+                specialties:
+                  type: array
+                  items:
+                    type: string
+                    enum: ["margherita", "pepperoni", "vegan", "hawaiian", "quattro-formaggi"]
+                  description: List of available pizza specialties.
+                chef:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    experienceYears:
+                      type: integer
+                      minimum: 0
+                    favoritePizza:
+                      type: string
+                  description: Information about the head chef.
+                delivery:
+                  type: object
+                  properties:
+                    enabled:
+                      type: boolean
+                    partners:
+                      type: array
+                      items:
+                        type: string
+                      description: Names of delivery partners (e.g. “UberEats”, “Deliveroo”).
+              required: ["name", "location", "open"]
+            status:
+              type: object
+              properties:
+                rating:
+                  type: number
+                  minimum: 0
+                  maximum: 5
+                  description: Average customer rating.
+                lastHealthInspection:
+                  type: string
+                  format: date-time
+                  description: Timestamp of the last health inspection.
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                        enum: ["True", "False", "Unknown"]
+                      reason:
+                        type: string
+                      message:
+                        type: string
+    - name: v1beta1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: A refined version of the Pizzeria resource with expanded menu tracking.
+          properties:
+            spec:
+              type: object
+              properties:
+                name:
+                  type: string
+                location:
+                  type: string
+                open:
+                  type: boolean
+                specialties:
+                  type: array
+                  items:
+                    type: string
+                ratingGoal:
+                  type: number
+                  description: Target rating the pizzeria aims to achieve.
+                chef:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    favoritePizza:
+                      type: string
+                delivery:
+                  type: object
+                  properties:
+                    enabled:
+                      type: boolean
+                    estimatedTimeMinutes:
+                      type: integer
+                      minimum: 10
+                      maximum: 90
+                      description: Estimated delivery time in minutes.
+              required: ["name", "location"]
+            status:
+              type: object
+              properties:
+                rating:
+                  type: number
+                pizzasServed:
+                  type: integer
+                  description: Total pizzas served since opening.
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      reason:
+                        type: string
+                      message:
+                        type: string
+  conversion:
+    strategy: None

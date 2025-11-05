@@ -176,4 +176,221 @@ class ConfigurationTest extends TestCase
         $this->assertArrayHasKey('my_custom_name', $processedConfig['clients']);
         $this->assertArrayNotHasKey('name', $processedConfig['clients']['my_custom_name']);
     }
+
+    public function testValidGeneratorConfiguration(): void
+    {
+        $config = [
+            'p8p' => [
+                'clients' => [
+                    'default' => [
+                        'dsn' => 'kube://in-cluster',
+                    ],
+                ],
+                'generator' => [
+                    'namespace' => 'App\\K8s\\CRD',
+                    'path' => '/path/to/output',
+                    'apis' => [
+                        [
+                            'group' => 'cert-manager.io',
+                            'version' => 'v1',
+                        ],
+                        [
+                            'group' => '',
+                            'version' => 'v1',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $processedConfig = $this->processor->processConfiguration($this->configuration, [$config['p8p']]);
+
+        $this->assertArrayHasKey('generator', $processedConfig);
+        $this->assertSame('App\\K8s\\CRD', $processedConfig['generator']['namespace']);
+        $this->assertSame('/path/to/output', $processedConfig['generator']['path']);
+        $this->assertCount(2, $processedConfig['generator']['apis']);
+        $this->assertSame('cert-manager.io', $processedConfig['generator']['apis'][0]['group']);
+        $this->assertSame('v1', $processedConfig['generator']['apis'][0]['version']);
+    }
+
+    public function testGeneratorMissingNamespaceThrowsException(): void
+    {
+        $config = [
+            'p8p' => [
+                'clients' => [
+                    'default' => [
+                        'dsn' => 'kube://in-cluster',
+                    ],
+                ],
+                'generator' => [
+                    'path' => '/path/to/output',
+                    'apis' => [
+                        [
+                            'group' => 'cert-manager.io',
+                            'version' => 'v1',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('namespace');
+
+        $this->processor->processConfiguration($this->configuration, [$config['p8p']]);
+    }
+
+    public function testGeneratorMissingPathThrowsException(): void
+    {
+        $config = [
+            'p8p' => [
+                'clients' => [
+                    'default' => [
+                        'dsn' => 'kube://in-cluster',
+                    ],
+                ],
+                'generator' => [
+                    'namespace' => 'App\\K8s\\CRD',
+                    'apis' => [
+                        [
+                            'group' => 'cert-manager.io',
+                            'version' => 'v1',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('path');
+
+        $this->processor->processConfiguration($this->configuration, [$config['p8p']]);
+    }
+
+    public function testGeneratorMissingApisThrowsException(): void
+    {
+        $config = [
+            'p8p' => [
+                'clients' => [
+                    'default' => [
+                        'dsn' => 'kube://in-cluster',
+                    ],
+                ],
+                'generator' => [
+                    'namespace' => 'App\\K8s\\CRD',
+                    'path' => '/path/to/output',
+                ],
+            ],
+        ];
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('apis');
+
+        $this->processor->processConfiguration($this->configuration, [$config['p8p']]);
+    }
+
+    public function testGeneratorEmptyApisThrowsException(): void
+    {
+        $config = [
+            'p8p' => [
+                'clients' => [
+                    'default' => [
+                        'dsn' => 'kube://in-cluster',
+                    ],
+                ],
+                'generator' => [
+                    'namespace' => 'App\\K8s\\CRD',
+                    'path' => '/path/to/output',
+                    'apis' => [],
+                ],
+            ],
+        ];
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('at least 1 element');
+
+        $this->processor->processConfiguration($this->configuration, [$config['p8p']]);
+    }
+
+    public function testGeneratorApiMissingGroupThrowsException(): void
+    {
+        $config = [
+            'p8p' => [
+                'clients' => [
+                    'default' => [
+                        'dsn' => 'kube://in-cluster',
+                    ],
+                ],
+                'generator' => [
+                    'namespace' => 'App\\K8s\\CRD',
+                    'path' => '/path/to/output',
+                    'apis' => [
+                        [
+                            'version' => 'v1',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('group');
+
+        $this->processor->processConfiguration($this->configuration, [$config['p8p']]);
+    }
+
+    public function testGeneratorApiMissingVersionThrowsException(): void
+    {
+        $config = [
+            'p8p' => [
+                'clients' => [
+                    'default' => [
+                        'dsn' => 'kube://in-cluster',
+                    ],
+                ],
+                'generator' => [
+                    'namespace' => 'App\\K8s\\CRD',
+                    'path' => '/path/to/output',
+                    'apis' => [
+                        [
+                            'group' => 'cert-manager.io',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('version');
+
+        $this->processor->processConfiguration($this->configuration, [$config['p8p']]);
+    }
+
+    public function testGeneratorApiEmptyVersionThrowsException(): void
+    {
+        $config = [
+            'p8p' => [
+                'clients' => [
+                    'default' => [
+                        'dsn' => 'kube://in-cluster',
+                    ],
+                ],
+                'generator' => [
+                    'namespace' => 'App\\K8s\\CRD',
+                    'path' => '/path/to/output',
+                    'apis' => [
+                        [
+                            'group' => 'cert-manager.io',
+                            'version' => '',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('cannot contain an empty value');
+
+        $this->processor->processConfiguration($this->configuration, [$config['p8p']]);
+    }
 }

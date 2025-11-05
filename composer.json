@@ -16,12 +16,16 @@
         "symfony/framework-bundle": "^7.3",
         "symfony/console": "^7.3"
     },
+    "suggest": {
+        "p8p/generator": "Required for generating Custom Resource Definition (CRD) classes with p8p:generate:crd command"
+    },
     "require-dev": {
         "phpunit/phpunit": "^12.4.0",
         "symfony/var-dumper": "^7.3",
         "symfony/yaml": "^7.3",
         "symfony/web-profiler-bundle": "^7.3",
-        "symfony/stopwatch": "^7.3"
+        "symfony/stopwatch": "^7.3",
+        "p8p/generator": "self.version"
     },
     "autoload": {
         "psr-4": {

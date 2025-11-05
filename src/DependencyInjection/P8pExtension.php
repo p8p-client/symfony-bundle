@@ -11,6 +11,7 @@
 
 namespace P8p\Bundle\DependencyInjection;
 
+use P8p\Bundle\Command\GenerateCommand;
 use P8p\Bundle\Factory\ClientRegistry;
 use P8p\Client\Client;
 use P8p\Client\ClientFactory;
@@ -50,8 +51,8 @@ class P8pExtension extends Extension
             $container->setAlias(Client::class, $clientServiceIds[$defaultClient]);
         }
 
-        // Register ClientRegistry
         $this->registerClientRegistry($container, $clientServiceIds, $defaultClient);
+        $this->registerGeneratorCommand($container, $config['generator'] ?? []);
     }
 
     /**
@@ -118,5 +119,18 @@ class P8pExtension extends Extension
         ]);
         $registryDefinition->setPublic(true);
         $container->setDefinition(ClientRegistry::class, $registryDefinition);
+    }
+
+    /**
+     * Register the CRD generator command.
+     *
+     * @param array<string, mixed> $generatorConfig
+     */
+    private function registerGeneratorCommand(ContainerBuilder $container, array $generatorConfig): void
+    {
+        $commandDefinition = new Definition(GenerateCommand::class);
+        $commandDefinition->setArguments([$generatorConfig]);
+        $commandDefinition->addTag('console.command');
+        $container->setDefinition(GenerateCommand::class, $commandDefinition);
     }
 }
