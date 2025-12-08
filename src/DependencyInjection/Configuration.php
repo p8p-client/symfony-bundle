@@ -20,7 +20,6 @@ class Configuration implements ConfigurationInterface
     {
         $treeBuilder = new TreeBuilder('p8p');
 
-        /* @phpstan-ignore method.notFound */
         $treeBuilder->getRootNode()
             ->children()
                 ->arrayNode('clients')
